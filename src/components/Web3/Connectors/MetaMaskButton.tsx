@@ -68,7 +68,7 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({ connector }) => {
 
   return (
     <Button onClick={onClick} disabled={isActivating}>
-      Connect
+      Connect Wallet
     </Button>
   );
 };
