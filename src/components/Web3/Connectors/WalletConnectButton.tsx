@@ -1,25 +1,15 @@
 import { Button } from "@chakra-ui/react";
 import { CoinbaseWallet } from "@web3-react/coinbase-wallet";
-import { Web3ReactHooks } from "@web3-react/core";
 import { MetaMask } from "@web3-react/metamask";
 import { Network } from "@web3-react/network";
 import { WalletConnect } from "@web3-react/walletconnect";
-import { ethers } from "ethers";
-import { signInWithCustomToken } from "firebase/auth";
-import {
-  connectFunctionsEmulator,
-  getFunctions,
-  httpsCallable,
-} from "firebase/functions";
-import React, { useEffect } from "react";
+import React from "react";
 import { useRecoilValue } from "recoil";
 import { desiredChainIdState } from "../../../atoms/desiredChainIdAtom";
 import { getAddChainParameters } from "../../../chains";
-import { hooks } from "../../../connectors/metaMask";
-import { auth } from "../../../firebase/clientApp";
-import Provider from "../../Web3/Provider";
+import { hooks } from "../../../connectors/walletConnect";
 
-type MetaMaskButtonProps = {
+type WalletConnectButtonProps = {
   connector: MetaMask | WalletConnect | CoinbaseWallet | Network;
 };
 
@@ -33,7 +23,9 @@ const {
   useENSNames,
 } = hooks;
 
-const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({ connector }) => {
+const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
+  connector,
+}) => {
   const chainId = useChainId();
   const accounts = useAccounts();
   const error = useError();
@@ -47,9 +39,6 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({ connector }) => {
   const onClick = () => {
     try {
       (async () => {
-        // Check if metamask is installed and connect to desiredChainId
-        if (!window.ethereum)
-          throw new Error("No crypto wallet found. Please install it.");
         isActivating
           ? undefined
           : (async () => {
@@ -67,8 +56,8 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({ connector }) => {
 
   return (
     <Button onClick={onClick} disabled={isActivating}>
-      Metamask
+      Wallet Connect
     </Button>
   );
 };
-export default MetaMaskButton;
+export default WalletConnectButton;

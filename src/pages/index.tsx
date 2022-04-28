@@ -1,6 +1,8 @@
 import type { NextPage } from "next";
 import PageContent from "../components/Layout/PageContent";
 import Character from "../components/Main/Character";
+import RHS from "../components/Main/RHS/RHS";
+import StarterAccordion from "../components/Main/RHS/StarterAccordion";
 
 const Home: NextPage = () => {
   return (
@@ -11,7 +13,7 @@ const Home: NextPage = () => {
           <div>Hi</div>
         </>
         <>
-          <div>RHS</div>
+          <RHS />
         </>
       </PageContent>
     </>
