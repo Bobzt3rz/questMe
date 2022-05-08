@@ -21,30 +21,34 @@ import {
 import { auth } from "../../../firebase/clientApp";
 import MetaMaskButton from "../../Web3/Connectors/MetaMaskButton";
 import WalletConnectButton from "../../Web3/Connectors/WalletConnectButton";
-import { useChain, useMoralis } from "react-moralis";
-import MoralisType, { Moralis } from "moralis";
 
 type ChooseWalletModalProps = {};
 
 const ChooseWalletModal: React.FC<ChooseWalletModalProps> = () => {
-  const {
-    authenticate,
-    isAuthenticated,
-    isAuthenticating,
-    user,
-    account,
-    logout,
-  } = useMoralis();
-  const { switchNetwork, chainId, chain } = useChain();
+  // metamask hooks
+  const mChainId = mHooks.useChainId();
+  const mAccounts = mHooks.useAccounts();
+  const mError = mHooks.useError();
+  const mIsActivating = mHooks.useIsActivating();
+  const mIsActive = mHooks.useIsActive();
+  const mProvider = mHooks.useProvider();
+  const mENSNames = mHooks.useENSNames(mProvider);
 
-  const [modalState, setModalState] = useRecoilState(authModalState);
+  //wallet connect hooks
+  const wChainId = wHooks.useChainId();
+  const wError = wHooks.useError();
+  const wAccounts = wHooks.useAccounts();
+  const wIsActivating = wHooks.useIsActivating();
+  const wIsActive = wHooks.useIsActive();
+  const wProvider = wHooks.useProvider();
+  const wENSNames = wHooks.useENSNames(mProvider);
+
   const desiredChainId = useRecoilValue(desiredChainIdState);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      handleClose();
-    }
-  }, [isAuthenticated]);
+  const [modalState, setModalState] = useRecoilState(authModalState);
+
+  // state if user is logged in
+  const [user, loading, error] = useAuthState(auth);
 
   const handleClose = () => {
     setModalState((prev) => ({
@@ -52,26 +56,14 @@ const ChooseWalletModal: React.FC<ChooseWalletModalProps> = () => {
       open: false,
     }));
   };
-
-  const login = (provider: MoralisType.Web3ProviderType) => {
-    (async () => {
-      if (!isAuthenticated || !account) {
-        await authenticate({
-          signingMessage: "Log in to QuestMe",
-          provider: provider,
-        })
-          .then(function (user) {
-            console.log("logged in user:", user);
-            console.log(user!.get("ethAddress"));
-            console.log(`chainId is ${chainId}`);
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-        switchNetwork(desiredChainId.id);
-      }
-    })();
-  };
+  // useEffect runs during mounting/dependencies change which is user
+  useEffect(() => {
+    if (
+      user &&
+      (mChainId == desiredChainId.id || wChainId == desiredChainId.id)
+    )
+      handleClose();
+  }, [user, mChainId, wChainId]);
 
   return (
     <>
@@ -95,13 +87,8 @@ const ChooseWalletModal: React.FC<ChooseWalletModalProps> = () => {
               gap="15px"
             >
               <>
-                <Button onClick={() => login("metamask")}>MetaMask</Button>
-                <Button onClick={() => login("magicLink")}>MagicLink</Button>
-                <Button onClick={() => login("walletconnect")}>
-                  WalletConnect
-                </Button>
-                <Button onClick={() => login("web3Auth")}>Web3Auth</Button>
-                <Button onClick={() => login("wc")}>wc</Button>
+                <MetaMaskButton connector={metaMask} />
+                <WalletConnectButton connector={walletConnect} />
               </>
             </Flex>
           </ModalBody>

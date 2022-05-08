@@ -1,11 +1,11 @@
 import { atom } from "recoil";
 
 export interface DesiredChainIdState {
-  id: number;
+  id: string;
 }
 
 const defaultDesiredChainState: DesiredChainIdState = {
-  id: 1,
+  id: "0x61",
 };
 
 export const desiredChainIdState = atom<DesiredChainIdState>({

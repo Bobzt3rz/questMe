@@ -20,9 +20,10 @@ import { MdOutlineLogin } from "react-icons/md";
 import { auth } from "../../../firebase/clientApp";
 import { useSetRecoilState } from "recoil";
 import { authModalState } from "../../../atoms/authModalAtom";
+import Moralis from "moralis";
 
 type UserMenuProps = {
-  user?: User | null;
+  user?: Moralis.User | null;
 };
 
 const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
@@ -52,9 +53,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                   align="flex-start"
                   mr={8}
                 >
-                  <Text fontWeight={700}>
-                    {user?.displayName || user.email?.split("@")[0]}
-                  </Text>
+                  <Text fontWeight={700}>temp</Text>
                   <Flex>
                     <Icon as={IoSparkles} color="Background.100" mr={1} />
                     <Text color="gray.400">1 karma</Text>
@@ -100,7 +99,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               fontSize="10pt"
               fontWeight={700}
               _hover={{ bg: "blue.500", color: "white" }}
-              onClick={() => setAuthModalState({ open: true, view: "login" })}
+              onClick={() => {}}
             >
               <Flex align="center">
                 <Icon fontSize={20} mr={2} as={MdOutlineLogin} />

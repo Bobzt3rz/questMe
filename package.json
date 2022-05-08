@@ -15,6 +15,7 @@
     "@emotion/styled": "^11.8.1",
     "@ethersproject/experimental": "^5.6.0",
     "@fontsource/open-sans": "^4.5.8",
+    "@walletconnect/web3-provider": "^1.7.8",
     "@web3-react/coinbase-wallet": "^8.0.26-beta.0",
     "@web3-react/core": "^8.0.23-beta.0",
     "@web3-react/eip1193": "^8.0.18-beta.0",

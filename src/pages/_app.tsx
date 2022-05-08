@@ -6,16 +6,20 @@ import { RecoilRoot } from "recoil";
 import Provider from "../components/Web3/Provider";
 import { MoralisProvider } from "react-moralis";
 
+const moralisConfig = {
+  appId: process.env.NEXT_PUBLIC_MORALIS_APP_ID,
+  serverUrl: process.env.NEXT_PUBLIC_MORALIS_SERVER_URL,
+};
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <RecoilRoot>
       <ChakraProvider theme={theme}>
         <MoralisProvider
-          serverUrl={process.env.MORALIS_SERVER_URL}
-          appId={process.env.MORALIS_APP_ID}
+          serverUrl={moralisConfig.serverUrl}
+          appId={moralisConfig.appId}
         >
           <Layout>
-            <Provider />
             <Component {...pageProps} />
           </Layout>
         </MoralisProvider>

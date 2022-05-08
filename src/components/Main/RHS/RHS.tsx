@@ -1,14 +1,16 @@
-import { Heading } from "@chakra-ui/react";
+import { Button, Flex, Heading } from "@chakra-ui/react";
 import React from "react";
-import StarterAccordion from "./StarterAccordion";
+import AssignedQuests from "./AssignedQuests/AssignedQuests";
+import StarterAccordion from "./AssignedQuests/StarterAccordion";
+import MyQuests from "./MyQuests/MyQuests";
 
 type RHSProps = {};
 
 const RHS: React.FC<RHSProps> = () => {
   return (
     <>
-      <Heading>Quests</Heading>
-      <StarterAccordion />
+      <MyQuests />
+      <AssignedQuests />
     </>
   );
 };
