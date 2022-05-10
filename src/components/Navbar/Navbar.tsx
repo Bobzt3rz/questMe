@@ -19,6 +19,8 @@ const Navbar: React.FC<NavbarProps> = () => {
       height="44px"
       padding="6px 12px"
       justify={{ md: "space-between" }}
+      border="1px"
+      borderColor="red.200"
     >
       <Flex align="center" justify="left">
         <Icon as={SiIconify} fontSize={30} mr={4} />
