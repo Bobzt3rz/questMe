@@ -1,28 +1,29 @@
 import {
   Accordion,
-  AccordionItem,
   AccordionButton,
-  Box,
   AccordionIcon,
+  AccordionItem,
   AccordionPanel,
-  Flex,
-  Input,
+  Box,
   Button,
+  Flex,
+  HStack,
+  Input,
   Image,
   Text,
-  HStack,
-  Heading,
 } from "@chakra-ui/react";
 import Moralis from "moralis/types";
-import React, { useEffect, useState } from "react";
+import React, { startTransition, useEffect, useState } from "react";
 import {
   useMoralis,
   useMoralisQuery,
   useNewMoralisObject,
 } from "react-moralis";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { authModalState } from "../../../../../atoms/authModalAtom";
+import { rewardModalState } from "../../../../../atoms/rewardModalAtom";
 import ChooseWalletModal from "../../../../Modal/Auth/ChooseWalletModal";
+import RewardModal from "../../../../Modal/Notification/RewardModal";
 
 type CurrentAccordionProps = {
   quests: Moralis.Object<Moralis.Attributes>[];
@@ -30,7 +31,11 @@ type CurrentAccordionProps = {
 
 const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
   // hooks
+
   const setAuthModalState = useSetRecoilState(authModalState);
+  const [rewardModalStateValue, setRewardModalState] =
+    useRecoilState(rewardModalState);
+
   const {
     authenticate,
     isAuthenticated,
@@ -40,10 +45,23 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
     logout,
     Moralis,
   } = useMoralis();
-  // const starterQuests = useMoralisQuery("StarterQuest");
+  // update quests after logged in
   const [updatedQuests, setUpdatedQuests] = useState(quests);
+  // check if finished updating quests
+  const [FinishedUpdatingQuests, setFinishedUpdatingQuests] = useState(false);
+  // input
+  const [inputValue, setInputValue] = useState("");
+  const handleInputChange = (event) => setInputValue(event.target.value);
+  // isUniqueUsername
+  const [isUniqueUsername, setIsUniqueUsername] = useState(true);
+  // isValidUsername
+  const [isValidUsername, setIsValidUsername] = useState(true);
+  // check if username checks pass
+  const [readyToCompleteUsername, setReadyToCompleteUsername] = useState(false);
+  //
+  const [state, setState] = useState("start");
 
-  // updates connecting wallet quest in database
+  // create starter quests for each new user
   useEffect(() => {
     if (user) {
       (async () => {
@@ -58,8 +76,8 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
           isAuthenticated &&
           userStarterQuestsQuery.length != starterQuestsQuery.length
         ) {
-          starterQuestsQuery.forEach(async function (item, index) {
-            try {
+          try {
+            starterQuestsQuery.forEach(async function (item, index) {
               const connectWalletData = {
                 isStarterQuest: true,
                 index:
@@ -82,6 +100,7 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                   quests[index + userStarterQuestsQuery.length].attributes
                     .input,
                 completed: index == 0 ? true : false,
+                readyToComplete: index == 0 ? true : false,
               };
 
               const UserStarterQuest = await Moralis.Object.extend(
@@ -96,30 +115,96 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
               await user.save();
               const results = await relation.query().find();
               console.log(`results is ${results.length}`);
-            } catch (error) {
-              console.log(error);
-            }
-          });
+            });
+          } catch (error) {
+            console.log(error);
+          }
         }
-        const checkRelation = user.relation("starterQuests");
-        const checkResults = await checkRelation
-          .query()
-          .equalTo("completed", false)
-          .ascending("index")
-          .find();
-        checkResults.forEach(function (item, index) {
-          console.log(`item is ${item.attributes.createdAt}`);
-        });
-        setUpdatedQuests(checkResults);
+        await updateQuests();
       })();
     }
   }, [isAuthenticated]);
 
+  // check if the username is unique doesnt need submit button
+  // useEffect(() => {
+  //   if (inputValue != "") {
+  //     startTransition(() => {
+  //       // check username is valid
+  //       setIsValidUsername(/^[0-9a-zA-Z_.-]+$/.test(inputValue));
+  //       console.log(`input is ${inputValue}`);
+
+  //       // check username in database
+  //       (async () => {
+  //         const params = { username: inputValue };
+  //         const results = await Moralis.Cloud.run("isUniqueUsername", params);
+  //         setIsUniqueUsername(results);
+  //         if (isValidUsername && isUniqueUsername) {
+  //           updatedQuests[0].set("readyToComplete", true);
+  //           await quests[0].save();
+  //           await updateQuests();
+  //         } else if (!isValidUsername || !isUniqueUsername) {
+  //           updatedQuests[0].set("readyToComplete", false);
+  //           await updatedQuests[0].save();
+  //           await updateQuests();
+  //         }
+  //       })();
+  //     });
+  //   }
+  // }, [inputValue]);
+
   // functions
-  function handleQuestButton(quest: Moralis.Object<Moralis.Attributes>) {
+  function handleLastButton(quest: Moralis.Object<Moralis.Attributes>) {
     if (quest.attributes.index == 0) {
       setAuthModalState({ open: true, view: "chooseWallet" });
+    } else {
+      (async () => {
+        quest.set("completed", true);
+        await quest.save();
+        await updateQuests();
+        setRewardModalState({
+          open: true,
+          view: "reward",
+          token: "YME",
+          number: quest.attributes.reward,
+        });
+      })();
     }
+  }
+  function handleSubmitButton(quest: Moralis.Object<Moralis.Attributes>) {
+    (async () => {
+      const params = { username: inputValue };
+      const isUniqueUsername = await Moralis.Cloud.run(
+        "isUniqueUsername",
+        params
+      );
+      isUniqueUsername ? setIsUniqueUsername(true) : setIsUniqueUsername(false);
+      const isValidUsername = /^[0-9a-zA-Z_.-]+$/.test(inputValue);
+      isValidUsername ? setIsValidUsername(true) : setIsValidUsername(false);
+      if (isUniqueUsername && isValidUsername) {
+        user.setUsername(inputValue);
+        await user.save();
+        quest.set("readyToComplete", true);
+        await quest.save();
+        setReadyToCompleteUsername(true);
+      } else {
+        quest.set("readyToComplete", false);
+        await quest.save();
+        setReadyToCompleteUsername(false);
+      }
+
+      await updateQuests();
+    })();
+  }
+
+  async function updateQuests() {
+    const getRelation = user.relation("starterQuests");
+    const relationResults = await getRelation
+      .query()
+      .equalTo("completed", false)
+      .ascending("index")
+      .find();
+    setUpdatedQuests(relationResults);
+    setFinishedUpdatingQuests(true);
   }
 
   return (
@@ -153,7 +238,13 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                       <HStack spacing={3}>
                         <Input />
                         {quests[0].attributes.completed && (
-                          <Button>Submit</Button>
+                          <Button
+                            onClick={() => {
+                              handleSubmitButton(quest);
+                            }}
+                          >
+                            Submit
+                          </Button>
                         )}
                       </HStack>
                     )}
@@ -171,7 +262,7 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                       <Flex>
                         <Button
                           onClick={() => {
-                            handleQuestButton(quest);
+                            handleLastButton(quest);
                           }}
                         >
                           {quest.attributes.button}
@@ -188,8 +279,9 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
           </Accordion>
         </Flex>
       )}
-      {isAuthenticated && (
+      {state == "next" && (
         <Flex>
+          <RewardModal />
           <ChooseWalletModal />
           <Accordion width="100%" allowToggle defaultIndex={0}>
             {updatedQuests.map((quest) => (
@@ -214,10 +306,31 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                     )}
                     {quest.attributes.body}
                     {quest.attributes.input && (
-                      <HStack spacing={3}>
-                        <Input />
-                        <Button>Submit</Button>
-                      </HStack>
+                      <>
+                        <HStack spacing={3}>
+                          <Input onChange={handleInputChange} />
+                          <Button
+                            onClick={() => {
+                              handleSubmitButton(quest);
+                            }}
+                          >
+                            Submit
+                          </Button>
+                        </HStack>
+                        {!isUniqueUsername && (
+                          <Text color="red.500">name has been taken</Text>
+                        )}
+                        {!isValidUsername && (
+                          <Text color="red.500">
+                            name contains invalid characters
+                          </Text>
+                        )}
+                        {isValidUsername &&
+                          isUniqueUsername &&
+                          readyToCompleteUsername && (
+                            <Text color="green.500">name is valid</Text>
+                          )}
+                      </>
                     )}
                     {quest.attributes.reward && (
                       <Flex align={"center"}>
@@ -232,8 +345,9 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                     {quest.attributes.button && (
                       <Flex>
                         <Button
+                          isDisabled={!quest.attributes.readyToComplete}
                           onClick={() => {
-                            handleQuestButton(quest);
+                            handleLastButton(quest);
                           }}
                         >
                           {quest.attributes.button}
