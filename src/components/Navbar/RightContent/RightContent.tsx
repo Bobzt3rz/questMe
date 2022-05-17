@@ -10,7 +10,12 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { SiEthereum } from "react-icons/si";
-import { SetterOrUpdater, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  SetterOrUpdater,
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 import { authModalState, AuthModalState } from "../../../atoms/authModalAtom";
 import { desiredChainIdState } from "../../../atoms/desiredChainIdAtom";
 import { metaMask, hooks as mHooks } from "../../../connectors/metaMask";
@@ -27,6 +32,7 @@ import Provider from "../../Web3/Provider";
 import AuthButtons from "./AuthButtons";
 import UserMenu from "./UserMenu";
 import { useMoralis } from "react-moralis";
+import { navbarState } from "../../../atoms/NavbarAtom";
 
 type RightContentProps = {
   user?: User | null;
@@ -34,6 +40,7 @@ type RightContentProps = {
 
 const RightContent: React.FC<RightContentProps> = () => {
   const setAuthModalState = useSetRecoilState(authModalState);
+  const [navbarStateValue, setNavbarState] = useRecoilState(navbarState);
 
   const {
     authenticate,
@@ -52,6 +59,27 @@ const RightContent: React.FC<RightContentProps> = () => {
   return (
     <>
       <ChooseWalletModal />
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setNavbarState({ right: "my_quests", left: navbarStateValue.left });
+        }}
+        isActive={navbarStateValue.right == "my_quests"}
+      >
+        My Quests
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setNavbarState({
+            right: "world_quests",
+            left: navbarStateValue.left,
+          });
+        }}
+        isActive={navbarStateValue.right == "world_quests"}
+      >
+        World Quests
+      </Button>
 
       {(!isAuthenticated || !account) && (
         <Button

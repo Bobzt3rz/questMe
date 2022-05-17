@@ -58,8 +58,12 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
   const [isValidUsername, setIsValidUsername] = useState(true);
   // check if username checks pass
   const [readyToCompleteUsername, setReadyToCompleteUsername] = useState(false);
-  //
-  const [state, setState] = useState("start");
+  // remove starterquest and display userquests
+  const [displayUserQuests, setDisplayUserQuests] = useState(false);
+  // submitButton state
+  const [submitButtonLoading, setSubmitButtonLoading] = useState(false);
+  // currentName
+  const [currentName, setCurrentName] = useState("");
 
   // create starter quests for each new user
   useEffect(() => {
@@ -67,61 +71,56 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
       (async () => {
         let relation = user.relation("starterQuests");
         const userStarterQuestsQuery = await relation.query().find();
-        // console.log(`starterQuest is ${starterQuests.data.toString()}`);
         const starterQuests = new Moralis.Query("StarterQuest");
         const starterQuestsQuery = await starterQuests.find();
-        console.log(`starterQuestsQuery is ${starterQuestsQuery.length}`);
-        console.log(`relationQuery is ${userStarterQuestsQuery.length}`);
         if (
           isAuthenticated &&
           userStarterQuestsQuery.length != starterQuestsQuery.length
         ) {
-          try {
-            starterQuestsQuery.forEach(async function (item, index) {
-              const connectWalletData = {
-                isStarterQuest: true,
-                index:
-                  quests[index + userStarterQuestsQuery.length].attributes
-                    .index,
-                name: quests[index + userStarterQuestsQuery.length].attributes
-                  .name,
-                image:
-                  quests[index + userStarterQuestsQuery.length].attributes
-                    .image,
-                body: quests[index + userStarterQuestsQuery.length].attributes
-                  .body,
-                reward:
-                  quests[index + userStarterQuestsQuery.length].attributes
-                    .reward,
-                button:
-                  quests[index + userStarterQuestsQuery.length].attributes
-                    .button,
-                input:
-                  quests[index + userStarterQuestsQuery.length].attributes
-                    .input,
-                completed: index == 0 ? true : false,
-                readyToComplete: index == 0 ? true : false,
-              };
+          for (
+            let index = 0;
+            index < starterQuestsQuery.length - userStarterQuestsQuery.length;
+            index++
+          ) {
+            const connectWalletData = {
+              isStarterQuest: true,
+              index:
+                quests[index + userStarterQuestsQuery.length].attributes.index,
+              name: quests[index + userStarterQuestsQuery.length].attributes
+                .name,
+              creator: user.get("ethAddress"),
+              image:
+                quests[index + userStarterQuestsQuery.length].attributes.image,
+              body: quests[index + userStarterQuestsQuery.length].attributes
+                .body,
+              reward:
+                quests[index + userStarterQuestsQuery.length].attributes.reward,
+              button:
+                quests[index + userStarterQuestsQuery.length].attributes.button,
+              input:
+                quests[index + userStarterQuestsQuery.length].attributes.input,
+              completed: index == 0 ? true : false,
+              readyToComplete: index == 0 ? true : false,
+            };
 
-              const UserStarterQuest = await Moralis.Object.extend(
-                "UserStarterQuest"
-              );
-              const userStarterQuest = await new UserStarterQuest(
-                connectWalletData
-              );
-              await userStarterQuest.save();
-              relation = user.relation("starterQuests");
-              relation.add(userStarterQuest);
-              await user.save();
-              const results = await relation.query().find();
-              console.log(`results is ${results.length}`);
-            });
-          } catch (error) {
-            console.log(error);
+            const UserStarterQuest = await Moralis.Object.extend(
+              "UserStarterQuest"
+            );
+            const userStarterQuest = await new UserStarterQuest(
+              connectWalletData
+            );
+            await userStarterQuest.save();
+            relation = user.relation("starterQuests");
+            relation.add(userStarterQuest);
+            await user.save();
+            const results = await relation.query().find();
+            console.log(`results is ${results.length}`);
           }
         }
         await updateQuests();
-      })();
+      })().then(() => {
+        setDisplayUserQuests(true);
+      });
     }
   }, [isAuthenticated]);
 
@@ -185,15 +184,17 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
         await user.save();
         quest.set("readyToComplete", true);
         await quest.save();
+        setCurrentName(inputValue);
         setReadyToCompleteUsername(true);
       } else {
         quest.set("readyToComplete", false);
         await quest.save();
         setReadyToCompleteUsername(false);
       }
-
       await updateQuests();
-    })();
+    })().then(() => {
+      setSubmitButtonLoading(false);
+    });
   }
 
   async function updateQuests() {
@@ -240,8 +241,10 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                         {quests[0].attributes.completed && (
                           <Button
                             onClick={() => {
+                              setSubmitButtonLoading(true);
                               handleSubmitButton(quest);
                             }}
+                            isLoading={submitButtonLoading}
                           >
                             Submit
                           </Button>
@@ -279,7 +282,7 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
           </Accordion>
         </Flex>
       )}
-      {state == "next" && (
+      {isAuthenticated && displayUserQuests && (
         <Flex>
           <RewardModal />
           <ChooseWalletModal />
@@ -328,7 +331,9 @@ const CurrentAccordion: React.FC<CurrentAccordionProps> = ({ quests }) => {
                         {isValidUsername &&
                           isUniqueUsername &&
                           readyToCompleteUsername && (
-                            <Text color="green.500">name is valid</Text>
+                            <Text color="green.500">
+                              {currentName} is valid
+                            </Text>
                           )}
                       </>
                     )}

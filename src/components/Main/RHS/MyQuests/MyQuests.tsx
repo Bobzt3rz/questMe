@@ -16,7 +16,7 @@ type MyQuestsProps = {};
 
 const MyQuests: React.FC<MyQuestsProps> = () => {
   return (
-    <Tabs>
+    <Tabs variant="enclosed">
       <TabList>
         <Tab>Current</Tab>
         <Tab>New</Tab>
