@@ -2,7 +2,14 @@
 
 QuestMe is an incentive app for people to assign quests to others and obtain rewards in cryptocurrency on completion.
 
+Design using Figma
 ![Screenshot](ex_pictures/1.png)
+![Screenshot](ex_pictures/2.png)
+![Screenshot](ex_pictures/companion_quest.png)
+![Screenshot](ex_pictures/create_quest_1.png)
+![Screenshot](ex_pictures/create_quest_2.png)
+![Screenshot](ex_pictures/recieve_quest_1.png)
+![Screenshot](ex_pictures/recieve_quest_2.png)
 
 ## Getting Started
 
